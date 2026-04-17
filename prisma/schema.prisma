@@ -1,0 +1,259 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── NextAuth Models ────────────────────────────────────────
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String    @unique
+  emailVerified  DateTime?
+  image          String?
+  hashedPassword String?
+  role           Role      @default(USER)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  subscription Subscription?
+  scores       Score[]
+  drawEntries  DrawEntry[]
+  winners      Winner[]
+  donations    Donation[]
+  charityId    String?
+  charity      Charity?      @relation(fields: [charityId], references: [id])
+  charityPct   Int           @default(10)
+
+  @@index([email])
+  @@index([charityId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Business Models ────────────────────────────────────────
+
+enum Role {
+  USER
+  SUBSCRIBER
+  ADMIN
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAST_DUE
+}
+
+enum SubscriptionPlan {
+  MONTHLY
+  YEARLY
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  plan                 SubscriptionPlan   @default(MONTHLY)
+  status               SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+}
+
+model Score {
+  id        String   @id @default(cuid())
+  userId    String
+  value     Int
+  playedAt  DateTime @db.Date
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, playedAt])
+  @@index([userId])
+}
+
+model Draw {
+  id             String     @id @default(cuid())
+  month          Int
+  year           Int
+  numbers        Int[]
+  drawType       DrawType   @default(RANDOM)
+  status         DrawStatus @default(PENDING)
+  prizePool      Float      @default(0)
+  jackpotPool    Float      @default(0)
+  fourMatchPool  Float      @default(0)
+  threeMatchPool Float      @default(0)
+  rolloverAmount Float      @default(0)
+  executedAt     DateTime?
+  publishedAt    DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  entries DrawEntry[]
+  results DrawResult[]
+  winners Winner[]
+
+  @@unique([month, year])
+}
+
+enum DrawType {
+  RANDOM
+  ALGORITHMIC
+}
+
+enum DrawStatus {
+  PENDING
+  SIMULATED
+  EXECUTED
+  PUBLISHED
+}
+
+model DrawEntry {
+  id        String   @id @default(cuid())
+  drawId    String
+  userId    String
+  numbers   Int[]
+  createdAt DateTime @default(now())
+
+  draw Draw @relation(fields: [drawId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([drawId, userId])
+  @@index([drawId])
+  @@index([userId])
+}
+
+model DrawResult {
+  id          String    @id @default(cuid())
+  drawId      String
+  matchType   MatchType
+  winnerCount Int       @default(0)
+  prizeAmount Float     @default(0)
+  createdAt   DateTime  @default(now())
+
+  draw Draw @relation(fields: [drawId], references: [id], onDelete: Cascade)
+
+  @@index([drawId])
+}
+
+enum MatchType {
+  FIVE_MATCH
+  FOUR_MATCH
+  THREE_MATCH
+}
+
+model Winner {
+  id          String       @id @default(cuid())
+  drawId      String
+  userId      String
+  matchType   MatchType
+  prizeAmount Float        @default(0)
+  proofUrl    String?
+  status      WinnerStatus @default(PENDING)
+  paidAt      DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  draw Draw @relation(fields: [drawId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([drawId])
+  @@index([userId])
+}
+
+enum WinnerStatus {
+  PENDING
+  PROOF_SUBMITTED
+  APPROVED
+  REJECTED
+  PAID
+}
+
+model Charity {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String   @db.Text
+  image       String?
+  website     String?
+  featured    Boolean  @default(false)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users     User[]
+  donations Donation[]
+
+  @@index([slug])
+  @@index([featured])
+}
+
+model Donation {
+  id        String   @id @default(cuid())
+  userId    String
+  charityId String
+  amount    Float
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  charity Charity @relation(fields: [charityId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([charityId])
+}
