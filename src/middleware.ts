@@ -11,7 +11,20 @@ export default withAuth(
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
-    // Dashboard routes require authentication (handled by withAuth)
+    // Subscription-gated API routes — non-subscribers get 403
+    const subscriptionRoutes = ["/api/scores", "/api/draws", "/api/donations"];
+    if (
+      subscriptionRoutes.some((r) => path.startsWith(r)) &&
+      req.method !== "GET" &&
+      token?.role !== "SUBSCRIBER" &&
+      token?.role !== "ADMIN"
+    ) {
+      return NextResponse.json(
+        { error: "Active subscription required" },
+        { status: 403 }
+      );
+    }
+
     return NextResponse.next();
   },
   {
@@ -24,9 +37,12 @@ export default withAuth(
           path.startsWith("/auth") ||
           path.startsWith("/api/auth") ||
           path.startsWith("/api/webhooks") ||
+          path.startsWith("/api/register") ||
+          path.startsWith("/api/charities") ||
           path.startsWith("/charities") ||
           path.startsWith("/about") ||
-          path.startsWith("/how-it-works")
+          path.startsWith("/how-it-works") ||
+          path.startsWith("/pricing")
         ) {
           return true;
         }

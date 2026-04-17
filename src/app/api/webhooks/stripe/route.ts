@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { sendEmail, subscriptionEmail } from "@/lib/email";
 import Stripe from "stripe";
 
 export async function POST(req: Request) {
@@ -31,8 +32,17 @@ export async function POST(req: Request) {
 
         if (userId && session.subscription) {
           const subscription = await stripe.subscriptions.retrieve(
-            session.subscription as string
+            session.subscription as string,
+            { expand: ["items.data"] }
           );
+
+          // Safely get period dates from subscription or items
+          const periodStart =
+            (subscription as any).current_period_start ??
+            (subscription as any).items?.data?.[0]?.current_period_start;
+          const periodEnd =
+            (subscription as any).current_period_end ??
+            (subscription as any).items?.data?.[0]?.current_period_end;
 
           await prisma.subscription.upsert({
             where: { userId },
@@ -40,28 +50,28 @@ export async function POST(req: Request) {
               userId,
               stripeCustomerId: session.customer as string,
               stripeSubscriptionId: subscription.id,
-              stripePriceId: subscription.items.data[0].price.id,
+              stripePriceId: subscription.items.data[0]?.price?.id ?? null,
               plan: plan || "MONTHLY",
               status: "ACTIVE",
-              currentPeriodStart: new Date(
-                (subscription as any).current_period_start * 1000
-              ),
-              currentPeriodEnd: new Date(
-                (subscription as any).current_period_end * 1000
-              ),
+              currentPeriodStart: periodStart
+                ? new Date(periodStart * 1000)
+                : new Date(),
+              currentPeriodEnd: periodEnd
+                ? new Date(periodEnd * 1000)
+                : null,
             },
             update: {
               stripeCustomerId: session.customer as string,
               stripeSubscriptionId: subscription.id,
-              stripePriceId: subscription.items.data[0].price.id,
+              stripePriceId: subscription.items.data[0]?.price?.id ?? null,
               plan: plan || "MONTHLY",
               status: "ACTIVE",
-              currentPeriodStart: new Date(
-                (subscription as any).current_period_start * 1000
-              ),
-              currentPeriodEnd: new Date(
-                (subscription as any).current_period_end * 1000
-              ),
+              currentPeriodStart: periodStart
+                ? new Date(periodStart * 1000)
+                : new Date(),
+              currentPeriodEnd: periodEnd
+                ? new Date(periodEnd * 1000)
+                : null,
             },
           });
 
@@ -69,6 +79,21 @@ export async function POST(req: Request) {
             where: { id: userId },
             data: { role: "SUBSCRIBER" },
           });
+
+          // Send welcome email
+          const dbUser = await prisma.user.findUnique({
+            where: { id: userId },
+          });
+          if (dbUser?.email) {
+            const emailContent = subscriptionEmail(
+              dbUser.name || "Golfer",
+              plan || "MONTHLY"
+            );
+            await sendEmail({
+              to: dbUser.email,
+              ...emailContent,
+            });
+          }
         }
         break;
       }
@@ -87,17 +112,28 @@ export async function POST(req: Request) {
             unpaid: "EXPIRED",
           };
 
+          const periodStart =
+            (subscription as any).current_period_start ??
+            (subscription as any).items?.data?.[0]?.current_period_start;
+          const periodEnd =
+            (subscription as any).current_period_end ??
+            (subscription as any).items?.data?.[0]?.current_period_end;
+
           await prisma.subscription.update({
             where: { stripeSubscriptionId: subscription.id },
             data: {
-              status: (statusMap[subscription.status] || "ACTIVE") as "ACTIVE" | "CANCELLED" | "EXPIRED" | "PAST_DUE",
-              currentPeriodStart: new Date(
-                (subscription as any).current_period_start * 1000
-              ),
-              currentPeriodEnd: new Date(
-                (subscription as any).current_period_end * 1000
-              ),
-              cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
+              status: (statusMap[subscription.status] || "ACTIVE") as
+                | "ACTIVE"
+                | "CANCELLED"
+                | "EXPIRED"
+                | "PAST_DUE",
+              currentPeriodStart: periodStart
+                ? new Date(periodStart * 1000)
+                : undefined,
+              currentPeriodEnd: periodEnd
+                ? new Date(periodEnd * 1000)
+                : undefined,
+              cancelAtPeriodEnd: (subscription as any).cancel_at_period_end ?? false,
             },
           });
 

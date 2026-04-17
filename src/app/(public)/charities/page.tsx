@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { HeartIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
 
 interface Charity {
   id: string;
@@ -85,26 +86,28 @@ export default function CharitiesPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
               >
-                <Card className="group border-border/50 transition-all hover:border-accent/30 hover:shadow-md">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10">
-                        <HeartIcon className="h-6 w-6 text-accent" />
+                <Link href={`/charities/${charity.slug}`}>
+                  <Card className="group border-border/50 transition-all hover:border-accent/30 hover:shadow-md">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10">
+                          <HeartIcon className="h-6 w-6 text-accent" />
+                        </div>
+                        {charity.featured && (
+                          <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
+                            Featured
+                          </span>
+                        )}
                       </div>
-                      {charity.featured && (
-                        <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
-                          Featured
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="mt-4 text-lg font-semibold group-hover:text-primary transition-colors">
-                      {charity.name}
-                    </h3>
-                    <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
-                      {charity.description}
-                    </p>
-                  </CardContent>
-                </Card>
+                      <h3 className="mt-4 text-lg font-semibold group-hover:text-primary transition-colors">
+                        {charity.name}
+                      </h3>
+                      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
+                        {charity.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
               </motion.div>
             ))}
           </div>

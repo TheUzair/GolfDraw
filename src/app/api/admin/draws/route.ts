@@ -3,6 +3,11 @@ import { getCurrentUser, unauthorized, forbidden } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { drawConfigSchema } from "@/lib/validations";
 import { MatchType } from "@/generated/prisma/client";
+import {
+  sendEmail,
+  drawResultEmail,
+  winnerNotificationEmail,
+} from "@/lib/email";
 
 function generateDrawNumbers(): number[] {
   const numbers: number[] = [];
@@ -167,6 +172,41 @@ export async function PUT(req: Request) {
     }
 
     if (action === "execute") {
+      // Auto-create draw entries from user scores if none exist
+      if (draw.entries.length === 0) {
+        const subscribers = await prisma.user.findMany({
+          where: { subscription: { status: "ACTIVE" } },
+          include: {
+            scores: {
+              orderBy: { playedAt: "desc" },
+              take: 5,
+            },
+          },
+        });
+
+        for (const sub of subscribers) {
+          if (sub.scores.length > 0) {
+            const userNumbers = sub.scores
+              .map((s) => s.value)
+              .sort((a, b) => a - b);
+            await prisma.drawEntry.create({
+              data: {
+                drawId: draw.id,
+                userId: sub.id,
+                numbers: userNumbers,
+              },
+            });
+          }
+        }
+
+        // Re-fetch draw with entries
+        const refreshed = await prisma.draw.findUnique({
+          where: { id: drawId },
+          include: { entries: true },
+        });
+        if (refreshed) draw.entries = refreshed.entries;
+      }
+
       // Execute and save results
       const matchTypes: { type: MatchType; min: number }[] = [
         { type: "FIVE_MATCH", min: 5 },
@@ -239,6 +279,42 @@ export async function PUT(req: Request) {
           publishedAt: new Date(),
         },
       });
+
+      // Send email notifications
+      const months = [
+        "", "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December",
+      ];
+      const monthName = months[draw.month] || `Month ${draw.month}`;
+
+      // Notify all subscribers about draw results
+      const subscribers = await prisma.user.findMany({
+        where: { subscription: { status: "ACTIVE" } },
+        select: { email: true, name: true },
+      });
+
+      for (const sub of subscribers) {
+        const emailContent = drawResultEmail(
+          sub.name || "Golfer",
+          monthName,
+          draw.year
+        );
+        sendEmail({ to: sub.email, ...emailContent }).catch(() => { });
+      }
+
+      // Notify winners specifically
+      const winners = await prisma.winner.findMany({
+        where: { drawId: draw.id },
+        include: { user: { select: { email: true, name: true } } },
+      });
+
+      for (const winner of winners) {
+        const emailContent = winnerNotificationEmail(
+          winner.user.name || "Golfer",
+          winner.prizeAmount
+        );
+        sendEmail({ to: winner.user.email, ...emailContent }).catch(() => { });
+      }
 
       return NextResponse.json({ success: true });
     }
