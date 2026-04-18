@@ -70,20 +70,20 @@ GolfDraw turns every round of golf into an opportunity. Subscribers enter up to 
 
 ## Tech Stack
 
-| Layer          | Technology                                               |
-| -------------- | -------------------------------------------------------- |
-| Framework      | Next.js 16 (App Router, Turbopack)                       |
-| Language       | TypeScript 5                                             |
-| Database       | PostgreSQL (Neon serverless)                             |
-| ORM            | Prisma 7 with `@prisma/adapter-pg`                       |
-| Authentication | NextAuth.js 4 (JWT, Google OAuth + Credentials)          |
-| Payments       | Stripe (Checkout, Webhooks, Billing Portal)              |
-| i18n           | next-intl (English, Spanish, French)                     |
-| Styling        | Tailwind CSS 4, shadcn/ui, Radix UI                      |
-| Animations     | Framer Motion                                            |
-| Email          | Nodemailer (SMTP)                                        |
-| Validation     | Zod 4                                                    |
-| Deployment     | Vercel                                                   |
+| Layer          | Technology                                      |
+| -------------- | ----------------------------------------------- |
+| Framework      | Next.js 16 (App Router, Turbopack)              |
+| Language       | TypeScript 5                                    |
+| Database       | PostgreSQL (Neon serverless)                    |
+| ORM            | Prisma 7 with `@prisma/adapter-pg`              |
+| Authentication | NextAuth.js 4 (JWT, Google OAuth + Credentials) |
+| Payments       | Stripe (Checkout, Webhooks, Billing Portal)     |
+| i18n           | next-intl (English, Spanish, French)            |
+| Styling        | Tailwind CSS 4, shadcn/ui, Radix UI             |
+| Animations     | Framer Motion                                   |
+| Email          | Nodemailer (SMTP)                               |
+| Validation     | Zod 4                                           |
+| Deployment     | Vercel                                          |
 
 ---
 
