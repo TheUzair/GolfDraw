@@ -13,6 +13,9 @@ import {
   HeartIcon,
   CreditCardIcon,
 } from "@heroicons/react/24/outline";
+import { useLocale } from "next-intl";
+import { formatCurrency } from "@/lib/currency";
+import type { Locale } from "@/i18n/config";
 
 interface DashboardData {
   subscription: { status: string; plan: string; currentPeriodEnd: string } | null;
@@ -33,6 +36,7 @@ export default function DashboardPage() {
 function DashboardContent() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
+  const locale = useLocale() as Locale;
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const checkoutTriggered = useRef(false);
@@ -132,7 +136,7 @@ function DashboardContent() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Total Winnings</p>
-                <p className="text-lg font-bold">£{totalWinnings.toFixed(2)}</p>
+                <p className="text-lg font-bold">{formatCurrency(totalWinnings, locale)}</p>
               </div>
             </CardContent>
           </Card>
@@ -158,7 +162,7 @@ function DashboardContent() {
       {/* Subscription CTA if not subscribed */}
       {!isSubscribed && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-accent/5">
+          <Card className="border-primary/30 bg-linear-to-r from-primary/5 to-accent/5">
             <CardContent className="flex flex-col items-center gap-4 p-8 text-center sm:flex-row sm:text-left">
               <div className="flex-1">
                 <h3 className="text-lg font-bold">Subscribe to Start Playing</h3>
@@ -168,10 +172,10 @@ function DashboardContent() {
               </div>
               <div className="flex gap-3">
                 <Button onClick={() => handleSubscribe("MONTHLY")} variant="outline">
-                  £9.99/mo
+                  {formatCurrency(9.99, locale)}/mo
                 </Button>
                 <Button onClick={() => handleSubscribe("YEARLY")}>
-                  £99.99/yr
+                  {formatCurrency(99.99, locale)}/yr
                 </Button>
               </div>
             </CardContent>

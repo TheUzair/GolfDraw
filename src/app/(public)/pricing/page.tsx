@@ -5,43 +5,49 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
-
-const plans = [
-  {
-    name: "Monthly",
-    price: "£9.99",
-    interval: "/month",
-    plan: "MONTHLY",
-    features: [
-      "Enter monthly prize draws",
-      "Track up to 5 golf scores",
-      "Support your chosen charity",
-      "Full dashboard access",
-      "Winner verification",
-      "Cancel anytime",
-    ],
-    cta: "Start Monthly",
-    popular: false,
-  },
-  {
-    name: "Yearly",
-    price: "£99.99",
-    interval: "/year",
-    plan: "YEARLY",
-    features: [
-      "Everything in Monthly",
-      "Save over 15%",
-      "Priority support",
-      "Annual impact report",
-      "Early draw notifications",
-      "Exclusive community access",
-    ],
-    cta: "Start Yearly",
-    popular: true,
-  },
-];
+import { useTranslations, useLocale } from "next-intl";
+import { formatCurrency } from "@/lib/currency";
+import type { Locale } from "@/i18n/config";
 
 export default function PricingPage() {
+  const t = useTranslations("pricing");
+  const locale = useLocale() as Locale;
+
+  const plans = [
+    {
+      name: t("monthly"),
+      price: formatCurrency(9.99, locale),
+      interval: t("perMonth"),
+      plan: "MONTHLY",
+      features: [
+        t("features.enterDraws"),
+        t("features.trackScores"),
+        t("features.supportCharity"),
+        t("features.fullDashboard"),
+        t("features.winnerVerification"),
+        t("features.cancelAnytime"),
+      ],
+      cta: t("startMonthly"),
+      popular: false,
+    },
+    {
+      name: t("yearly"),
+      price: formatCurrency(99.99, locale),
+      interval: t("perYear"),
+      plan: "YEARLY",
+      features: [
+        t("features.everythingMonthly"),
+        t("features.saveOver"),
+        t("features.prioritySupport"),
+        t("features.annualReport"),
+        t("features.earlyNotifications"),
+        t("features.exclusiveAccess"),
+      ],
+      cta: t("startYearly"),
+      popular: true,
+    },
+  ];
+
   return (
     <div className="px-4 py-24 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
@@ -51,11 +57,10 @@ export default function PricingPage() {
           className="text-center"
         >
           <h1 className="text-4xl font-bold sm:text-5xl">
-            Simple, Transparent Pricing
+            {t("title")}
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-            Choose the plan that works for you. Every subscription supports
-            charities and enters you into monthly draws.
+            {t("subtitle")}
           </p>
         </motion.div>
 
@@ -75,7 +80,7 @@ export default function PricingPage() {
               >
                 {plan.popular && (
                   <div className="absolute right-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-                    Most Popular
+                    {t("mostPopular")}
                   </div>
                 )}
                 <CardHeader className="pb-4">

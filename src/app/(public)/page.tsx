@@ -12,6 +12,9 @@ import {
   ArrowRightIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
+import { useTranslations, useLocale } from "next-intl";
+import { formatCurrency } from "@/lib/currency";
+import type { Locale } from "@/i18n/config";
 
 const fadeUp = {
   initial: { opacity: 0, y: 30 },
@@ -24,14 +27,17 @@ const stagger = {
 };
 
 export default function HomePage() {
+  const t = useTranslations("home");
+  const locale = useLocale() as Locale;
+
   return (
     <div className="relative">
       {/* Hero Section */}
       <section className="relative overflow-hidden px-4 pb-20 pt-24 sm:px-6 lg:px-8">
         {/* Background decorations */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 right-0 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
-          <div className="absolute -bottom-40 left-0 h-[500px] w-[500px] rounded-full bg-accent/5 blur-3xl" />
+          <div className="absolute -top-40 right-0 h-125 w-125 rounded-full bg-primary/5 blur-3xl" />
+          <div className="absolute -bottom-40 left-0 h-125 w-125 rounded-full bg-accent/5 blur-3xl" />
         </div>
 
         <div className="relative mx-auto max-w-7xl">
@@ -53,7 +59,7 @@ export default function HomePage() {
 
             <h1 className="text-4xl font-bold tracking-tight sm:text-6xl lg:text-7xl">
               Play Golf.{" "}
-              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
                 Win Prizes.
               </span>
               <br />
@@ -92,9 +98,9 @@ export default function HomePage() {
             animate="animate"
           >
             {[
-              { label: "Prize Pool", value: "£10,000+", sub: "Monthly" },
-              { label: "Charities Supported", value: "25+", sub: "And growing" },
-              { label: "Active Players", value: "1,000+", sub: "Community" },
+              { label: t("statPrizePool"), value: t("statPrizeValue"), sub: t("statPrizeMonthly") },
+              { label: t("statCharities"), value: t("statCharitiesValue"), sub: t("statCharitiesGrowing") },
+              { label: t("statPlayers"), value: t("statPlayersValue"), sub: t("statPlayersCommunity") },
             ].map((stat) => (
               <motion.div key={stat.label} variants={fadeUp}>
                 <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
@@ -238,12 +244,12 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="relative"
             >
-              <div className="rounded-2xl border border-border/50 bg-gradient-to-br from-primary/5 to-accent/5 p-8">
+              <div className="rounded-2xl border border-border/50 bg-linear-to-br from-primary/5 to-accent/5 p-8">
                 <h3 className="text-center text-lg font-semibold text-muted-foreground">
                   Current Jackpot
                 </h3>
                 <p className="mt-2 text-center text-5xl font-bold text-primary">
-                  £4,250
+                  {formatCurrency(4250, locale)}
                 </p>
                 <p className="mt-2 text-center text-sm text-muted-foreground">
                   Growing with every new subscriber
@@ -317,7 +323,7 @@ export default function HomePage() {
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary/80 p-12 text-center text-primary-foreground sm:p-16"
+            className="relative overflow-hidden rounded-3xl bg-linear-to-br from-primary to-primary/80 p-12 text-center text-primary-foreground sm:p-16"
           >
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_70%)]" />
             <h2 className="relative text-3xl font-bold sm:text-4xl">

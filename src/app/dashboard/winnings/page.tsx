@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { TrophyIcon } from "@heroicons/react/24/outline";
+import { TrophyIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
+import { useTranslations, useLocale } from "next-intl";
+import { formatCurrency } from "@/lib/currency";
+import type { Locale } from "@/i18n/config";
 
 interface Winner {
   id: string;
@@ -33,8 +35,12 @@ const statusColors: Record<string, string> = {
 export default function WinningsPage() {
   const [winners, setWinners] = useState<Winner[]>([]);
   const [loading, setLoading] = useState(true);
-  const [proofUrl, setProofUrl] = useState("");
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const t = useTranslations("winnings");
+  const locale = useLocale() as Locale;
 
   const fetchWinners = useCallback(async () => {
     const res = await fetch("/api/winners");
@@ -47,16 +53,36 @@ export default function WinningsPage() {
     fetchWinners();
   }, [fetchWinners]);
 
-  const submitProof = async (winnerId: string) => {
-    if (!proofUrl.trim()) return;
-    await fetch("/api/winners", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ winnerId, proofUrl }),
-    });
-    setUploadingId(null);
-    setProofUrl("");
-    fetchWinners();
+  const submitProof = async (winnerId: string, file: File) => {
+    setUploading(true);
+    setUploadError("");
+    try {
+      // Upload file
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json();
+        throw new Error(err.error || "Upload failed");
+      }
+      const { url } = await uploadRes.json();
+
+      // Submit proof URL to winner
+      await fetch("/api/winners", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ winnerId, proofUrl: url }),
+      });
+      setUploadingId(null);
+      fetchWinners();
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const totalWinnings = winners.reduce((sum, w) => sum + w.prizeAmount, 0);
@@ -78,9 +104,9 @@ export default function WinningsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">My Winnings</h1>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">
-          View your prizes and submit verification proofs.
+          {t("subtitle")}
         </p>
       </div>
 
@@ -88,17 +114,17 @@ export default function WinningsPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Card className="border-border/50">
           <CardContent className="p-5">
-            <p className="text-xs text-muted-foreground">Total Winnings</p>
+            <p className="text-xs text-muted-foreground">{t("totalWinnings")}</p>
             <p className="text-2xl font-bold text-primary">
-              £{totalWinnings.toFixed(2)}
+              {formatCurrency(totalWinnings, locale)}
             </p>
           </CardContent>
         </Card>
         <Card className="border-border/50">
           <CardContent className="p-5">
-            <p className="text-xs text-muted-foreground">Paid Out</p>
+            <p className="text-xs text-muted-foreground">{t("paidOut")}</p>
             <p className="text-2xl font-bold text-green-500">
-              £{paidWinnings.toFixed(2)}
+              {formatCurrency(paidWinnings, locale)}
             </p>
           </CardContent>
         </Card>
@@ -109,9 +135,9 @@ export default function WinningsPage() {
         <Card className="border-border/50">
           <CardContent className="flex flex-col items-center py-12 text-center">
             <TrophyIcon className="h-12 w-12 text-muted-foreground/30" />
-            <h3 className="mt-4 text-lg font-semibold">No winnings yet</h3>
+            <h3 className="mt-4 text-lg font-semibold">{t("noWinnings")}</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Keep playing — your lucky draw is coming!
+              {t("noWinningsDesc")}
             </p>
           </CardContent>
         </Card>
@@ -130,26 +156,49 @@ export default function WinningsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold text-primary">
-                  £{winner.prizeAmount.toFixed(2)}
+                  {formatCurrency(winner.prizeAmount, locale)}
                 </p>
 
                 {winner.status === "PENDING" && (
                   <div className="mt-4">
                     {uploadingId === winner.id ? (
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Enter proof URL (e.g., screenshot link)"
-                          value={proofUrl}
-                          onChange={(e) => setProofUrl(e.target.value)}
+                      <div className="space-y-2">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*,.pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) submitProof(winner.id, file);
+                          }}
                         />
-                        <Button onClick={() => submitProof(winner.id)}>
-                          Submit
-                        </Button>
+                        <div
+                          onClick={() => fileInputRef.current?.click()}
+                          className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-border p-6 transition-colors hover:border-primary hover:bg-muted/50"
+                        >
+                          <ArrowUpTrayIcon className="h-8 w-8 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">
+                            {uploading
+                              ? t("uploading")
+                              : t("clickToSelect")}
+                          </p>
+                          <p className="text-xs text-muted-foreground/60">
+                            {t("allowedFormats")}
+                          </p>
+                        </div>
+                        {uploadError && (
+                          <p className="text-xs text-red-500">{uploadError}</p>
+                        )}
                         <Button
                           variant="outline"
-                          onClick={() => setUploadingId(null)}
+                          size="sm"
+                          onClick={() => {
+                            setUploadingId(null);
+                            setUploadError("");
+                          }}
                         >
-                          Cancel
+                          {t("cancel")}
                         </Button>
                       </div>
                     ) : (
@@ -157,21 +206,29 @@ export default function WinningsPage() {
                         variant="outline"
                         onClick={() => setUploadingId(winner.id)}
                       >
-                        Upload Proof
+                        <ArrowUpTrayIcon className="mr-1.5 h-4 w-4" />
+                        {t("uploadProof")}
                       </Button>
                     )}
                   </div>
                 )}
 
                 {winner.proofUrl && (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Proof submitted: {winner.proofUrl}
-                  </p>
+                  <div className="mt-2">
+                    <a
+                      href={winner.proofUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                    >
+                      {t("viewProof")}
+                    </a>
+                  </div>
                 )}
 
                 {winner.paidAt && (
                   <p className="mt-2 text-xs text-green-500">
-                    Paid on {new Date(winner.paidAt).toLocaleDateString()}
+                    {t("paidOn")} {new Date(winner.paidAt).toLocaleDateString()}
                   </p>
                 )}
               </CardContent>

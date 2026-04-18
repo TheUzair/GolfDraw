@@ -12,20 +12,23 @@ import {
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import { ThemeToggle } from "@/components/theme-toggle";
-
-const publicLinks = [
-  { href: "/", label: "Home" },
-  { href: "/how-it-works", label: "How It Works" },
-  { href: "/charities", label: "Charities" },
-  { href: "/pricing", label: "Pricing" },
-];
+import { LocaleSwitcher } from "@/components/locale-switcher";
+import { useTranslations } from "next-intl";
 
 export function Navbar() {
+  const t = useTranslations("nav");
   const { data: session } = useSession();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isAdmin = session?.user?.role === "ADMIN";
+
+  const publicLinks = [
+    { href: "/", label: t("home") },
+    { href: "/how-it-works", label: t("howItWorks") },
+    { href: "/charities", label: t("charities") },
+    { href: "/pricing", label: t("pricing") },
+  ];
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
@@ -56,20 +59,21 @@ export function Navbar() {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
+          <LocaleSwitcher />
           <ThemeToggle />
           {session ? (
             <>
               {isAdmin && (
                 <Link href="/admin">
                   <Button variant="outline" size="sm">
-                    Admin
+                    {t("admin")}
                   </Button>
                 </Link>
               )}
               <Link href="/dashboard">
                 <Button variant="outline" size="sm">
                   <UserCircleIcon className="mr-1.5 h-4 w-4" />
-                  Dashboard
+                  {t("dashboard")}
                 </Button>
               </Link>
               <Button
@@ -77,19 +81,19 @@ export function Navbar() {
                 size="sm"
                 onClick={() => signOut({ callbackUrl: "/" })}
               >
-                Sign Out
+                {t("signOut")}
               </Button>
             </>
           ) : (
             <>
               <Link href="/auth/signin">
                 <Button variant="ghost" size="sm">
-                  Sign In
+                  {t("signIn")}
                 </Button>
               </Link>
               <Link href="/auth/signup">
                 <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                  Get Started
+                  {t("getStarted")}
                 </Button>
               </Link>
             </>
@@ -140,7 +144,7 @@ export function Navbar() {
                       onClick={() => setMobileOpen(false)}
                       className="block rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
                     >
-                      Dashboard
+                      {t("dashboard")}
                     </Link>
                     {isAdmin && (
                       <Link
@@ -148,14 +152,14 @@ export function Navbar() {
                         onClick={() => setMobileOpen(false)}
                         className="block rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
                       >
-                        Admin Panel
+                        {t("adminPanel")}
                       </Link>
                     )}
                     <button
                       onClick={() => signOut({ callbackUrl: "/" })}
                       className="block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-muted-foreground hover:bg-muted"
                     >
-                      Sign Out
+                      {t("signOut")}
                     </button>
                   </>
                 ) : (
@@ -165,14 +169,14 @@ export function Navbar() {
                       onClick={() => setMobileOpen(false)}
                       className="block rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
                     >
-                      Sign In
+                      {t("signIn")}
                     </Link>
                     <Link
                       href="/auth/signup"
                       onClick={() => setMobileOpen(false)}
                       className="mt-2 block rounded-lg bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground"
                     >
-                      Get Started
+                      {t("getStarted")}
                     </Link>
                   </>
                 )}

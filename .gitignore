@@ -44,4 +44,7 @@ next-env.d.ts
 
 /prisma/seed.ts
 
+# uploads
+/public/uploads
+
 .vercel
