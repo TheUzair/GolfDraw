@@ -17,7 +17,6 @@ A full-stack subscription platform where golfers track scores, enter monthly pri
 - [Environment Variables](#environment-variables)
 - [Internationalization (i18n)](#internationalization-i18n)
 - [Deployment (Vercel)](#deployment-vercel)
-- [Demo Credentials](#demo-credentials)
 - [Available Scripts](#available-scripts)
 - [Contributing](#contributing)
 - [License](#license)
@@ -318,16 +317,6 @@ Subscribe to these events:
 - `checkout.session.completed`
 - `customer.subscription.updated`
 - `customer.subscription.deleted`
-
----
-
-## Demo Credentials
-
-| Role  | Email              | Password    |
-| ----- | ------------------ | ----------- |
-| Admin | REDACTED | REDACTED |
-
-New accounts can be created via the Sign Up page or Google OAuth.
 
 ---
 
