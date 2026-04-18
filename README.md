@@ -1,50 +1,70 @@
-# GolfDraw — Subscription Golf Platform
+# GolfDraw — Play. Win. Give Back.
 
-A subscription-driven web application combining golf performance tracking, charity fundraising, and a monthly draw-based reward engine. Built with Next.js 16, Prisma 7, Stripe, and NextAuth.
+A full-stack subscription platform where golfers track scores, enter monthly prize draws, and support charities — all in one place. Built with Next.js 16, Prisma 7, Stripe, and NextAuth.
 
-**Live:** [https://golf-platform-delta-three.vercel.app](https://golf-platform-delta-three.vercel.app)
+**Live Demo:** [https://golf-platform-delta-three.vercel.app](https://golf-platform-delta-three.vercel.app)
 
 ---
 
 ## Table of Contents
 
+- [Overview](#overview)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Database Schema](#database-schema)
 - [Getting Started](#getting-started)
 - [Environment Variables](#environment-variables)
+- [Internationalization (i18n)](#internationalization-i18n)
 - [Deployment (Vercel)](#deployment-vercel)
-- [Test Credentials](#test-credentials)
-- [PRD Requirements Coverage](#prd-requirements-coverage)
+- [Demo Credentials](#demo-credentials)
+- [Available Scripts](#available-scripts)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Overview
+
+GolfDraw turns every round of golf into an opportunity. Subscribers enter up to 5 Stableford scores each month, which double as their lottery-style draw numbers. When the monthly draw runs, matching numbers win a share of the prize pool — and a portion of every subscription goes directly to the charity of the player's choice.
+
+### How It Works
+
+1. **Subscribe** — Choose a Monthly or Yearly plan via Stripe
+2. **Track Scores** — Enter your Stableford scores (1–45 range, max 5 per month)
+3. **Enter the Draw** — Your scores become your draw numbers automatically
+4. **Win Prizes** — Match 3, 4, or all 5 numbers to win from the prize pool
+5. **Give Back** — A minimum 10% of your subscription supports your chosen charity
 
 ---
 
 ## Features
 
-### User-Facing
+### For Players
 
-- **Subscription Engine** — Monthly (£9.99) and Yearly (£99.99) plans via Stripe Checkout with billing portal
-- **Score Tracking** — Enter up to 5 Stableford scores (1–45 range), one per date, with rolling replacement
-- **Monthly Draws** — Scores serve as draw numbers; 5-match, 4-match, and 3-match prize tiers
-- **Charity Integration** — Select a charity at signup, adjust contribution percentage (min 10%), make independent donations
-- **Winner Verification** — Submit proof of scores, track payout status (Pending → Paid)
-- **Dark/Light Theme** — Toggle between dark and light modes
+- **Subscription Plans** — Monthly and Yearly plans with Stripe Checkout and self-serve billing portal
+- **Score Tracking** — Rolling 5-score system with one-per-date uniqueness and Stableford validation
+- **Monthly Prize Draws** — 5-match (40%), 4-match (35%), and 3-match (25%) prize tiers with jackpot rollover
+- **Charity Support** — Choose a charity, set your contribution percentage (min 10%), and make independent donations
+- **Winner Verification** — Upload proof files (images or PDF, up to 5MB) and track payout status through to payment
+- **Multilingual** — Full i18n support with English, Spanish, and French translations
+- **Multi-Currency** — Locale-aware currency formatting (GBP, EUR) across the entire platform
+- **Dark/Light Theme** — System-aware theme toggle with manual override
 
-### Admin Panel
+### For Admins
 
-- **User Management** — View, search, edit roles, manage all users
-- **Draw Management** — Create draws (Random or Algorithmic), simulate, execute, and publish results
-- **Charity Management** — Full CRUD for charities with activate/deactivate
-- **Winner Management** — Review proof submissions, approve/reject, mark payouts
-- **Analytics Dashboard** — Total users, active subscriptions, prize pool, charity contributions
+- **User Management** — Search, filter, edit roles, and manage scores for any user
+- **Draw Management** — Create draws (Random or Algorithmic mode), simulate outcomes, execute, and publish results with automated email notifications
+- **Charity Management** — Full CRUD with activate/deactivate toggle
+- **Winner Management** — Review uploaded proof, approve/reject, mark payouts as complete
+- **Analytics Dashboard** — Total users, active subscribers, prize pool, and charity contribution metrics
 
 ### Public Pages
 
-- **Homepage** — Animated hero, how-it-works flow, charity spotlight, prize pool CTA
-- **How It Works** — Step-by-step explanation with FAQ accordion
-- **Pricing** — Plan comparison cards with Stripe checkout integration
-- **Charities** — Searchable charity directory
+- **Homepage** — Animated hero, how-it-works flow, charity spotlight, and live jackpot display
+- **How It Works** — Step-by-step guide with interactive FAQ accordion
+- **Pricing** — Side-by-side plan comparison with locale-aware pricing and direct checkout
+- **Charities** — Searchable directory with individual charity profile pages
 
 ---
 
@@ -52,15 +72,16 @@ A subscription-driven web application combining golf performance tracking, chari
 
 | Layer          | Technology                                               |
 | -------------- | -------------------------------------------------------- |
-| Framework      | Next.js 16.2.4 (App Router, Turbopack)                   |
+| Framework      | Next.js 16 (App Router, Turbopack)                       |
 | Language       | TypeScript 5                                             |
-| Database       | PostgreSQL (Neon)                                        |
+| Database       | PostgreSQL (Neon serverless)                             |
 | ORM            | Prisma 7 with `@prisma/adapter-pg`                       |
-| Authentication | NextAuth.js 4 (JWT strategy, Google OAuth + Credentials) |
+| Authentication | NextAuth.js 4 (JWT, Google OAuth + Credentials)          |
 | Payments       | Stripe (Checkout, Webhooks, Billing Portal)              |
+| i18n           | next-intl (English, Spanish, French)                     |
 | Styling        | Tailwind CSS 4, shadcn/ui, Radix UI                      |
 | Animations     | Framer Motion                                            |
-| Email          | Nodemailer (Gmail SMTP)                                  |
+| Email          | Nodemailer (SMTP)                                        |
 | Validation     | Zod 4                                                    |
 | Deployment     | Vercel                                                   |
 
@@ -77,53 +98,63 @@ golf-platform/
 │   │   ├── (public)/          # Public pages (home, pricing, charities, how-it-works)
 │   │   ├── admin/             # Admin panel (dashboard, users, draws, charities, winners)
 │   │   ├── api/               # REST API routes
-│   │   │   ├── admin/         #   Admin endpoints (analytics, charities, draws, users, winners)
+│   │   │   ├── admin/         #   Admin endpoints
 │   │   │   ├── auth/          #   NextAuth handler
 │   │   │   ├── charities/     #   Public charity endpoints
 │   │   │   ├── donations/     #   Donation endpoint
-│   │   │   ├── draws/         #   Public draw results
+│   │   │   ├── draws/         #   Draw results
 │   │   │   ├── profile/       #   User profile CRUD
-│   │   │   ├── register/      #   User registration
+│   │   │   ├── register/      #   Registration
 │   │   │   ├── scores/        #   Score CRUD with rolling logic
 │   │   │   ├── stripe/        #   Checkout & billing portal
+│   │   │   ├── upload/        #   File upload for proof verification
 │   │   │   ├── webhooks/      #   Stripe webhook handler
-│   │   │   └── winners/       #   Public winners list
+│   │   │   └── winners/       #   User winners
 │   │   ├── auth/              # Sign-in & Sign-up pages
-│   │   └── dashboard/         # User dashboard (scores, draws, charity, profile, winnings)
+│   │   └── dashboard/         # User dashboard
 │   ├── components/
-│   │   ├── ui/                # shadcn/ui components (50+ components)
+│   │   ├── ui/                # shadcn/ui primitives (50+ components)
+│   │   ├── locale-switcher.tsx# Language selector
 │   │   ├── navbar.tsx         # Responsive navbar with auth state
-│   │   ├── footer.tsx         # Site footer
-│   │   ├── providers.tsx      # Theme + Session providers
+│   │   ├── footer.tsx         # Translated site footer
+│   │   ├── providers.tsx      # Theme + Session + i18n providers
 │   │   └── theme-toggle.tsx   # Dark/light mode toggle
-│   ├── hooks/                 # Custom React hooks
+│   ├── i18n/
+│   │   ├── config.ts          # Supported locales, currency mappings
+│   │   └── request.ts         # Server-side locale detection (cookie-based)
 │   ├── lib/
 │   │   ├── auth.ts            # NextAuth configuration
-│   │   ├── email.ts           # Email templates (draw results, winner alerts)
+│   │   ├── currency.ts        # Locale-aware currency formatting
+│   │   ├── email.ts           # Email templates (welcome, draw results, winner alerts)
 │   │   ├── prisma.ts          # Prisma client with pg adapter
 │   │   ├── session.ts         # Server-side session helpers
 │   │   ├── stripe.ts          # Stripe client + plan config
 │   │   └── validations.ts     # Zod schemas
-│   ├── middleware.ts          # Route protection (auth + role-based)
+│   ├── messages/
+│   │   ├── en.json            # English translations
+│   │   ├── es.json            # Spanish translations
+│   │   └── fr.json            # French translations
+│   ├── middleware.ts          # Auth + role-based + subscription route protection
 │   └── types/                 # TypeScript declarations
+├── next.config.ts             # Next.js + next-intl plugin config
 ├── prisma.config.ts           # Prisma configuration
 ├── package.json
-└── .env                       # Environment variables (not committed)
+└── .env.example               # Environment variable template
 ```
 
 ---
 
 ## Database Schema
 
-12 models across authentication, business logic, and charity domains:
+12 models across authentication, subscriptions, draws, and charity domains:
 
 ```
-User ──┬── Account (OAuth)
+User ──┬── Account (OAuth providers)
        ├── Session
-       ├── Subscription (Stripe)
-       ├── Score (1-45 Stableford, 5 max, unique per date)
-       ├── DrawEntry (user's numbers per draw)
-       ├── Winner (prize + verification status)
+       ├── Subscription (Stripe lifecycle)
+       ├── Score (Stableford 1–45, max 5, unique per date)
+       ├── DrawEntry (user's numbers for each draw)
+       ├── Winner (prize amount + verification + payout status)
        └── Donation (independent charity donations)
 
 Draw ──┬── DrawEntry
@@ -133,10 +164,17 @@ Draw ──┬── DrawEntry
 Charity ──┬── User (selected charity)
            └── Donation
 
-VerificationToken (NextAuth)
+VerificationToken (NextAuth email verification)
 ```
 
-**Key Enums:** `Role` (USER/SUBSCRIBER/ADMIN), `SubscriptionStatus` (ACTIVE/CANCELLED/EXPIRED/PAST_DUE), `DrawType` (RANDOM/ALGORITHMIC), `DrawStatus` (PENDING/SIMULATED/EXECUTED/PUBLISHED), `MatchType` (FIVE/FOUR/THREE_MATCH), `WinnerStatus` (PENDING/PROOF_SUBMITTED/APPROVED/REJECTED/PAID)
+**Key Enums:**
+
+- `Role` — USER, SUBSCRIBER, ADMIN
+- `SubscriptionStatus` — ACTIVE, CANCELLED, EXPIRED, PAST_DUE
+- `DrawType` — RANDOM, ALGORITHMIC
+- `DrawStatus` — PENDING, SIMULATED, EXECUTED, PUBLISHED
+- `MatchType` — FIVE_MATCH, FOUR_MATCH, THREE_MATCH
+- `WinnerStatus` — PENDING → PROOF_SUBMITTED → APPROVED → PAID (or REJECTED)
 
 ---
 
@@ -144,10 +182,10 @@ VerificationToken (NextAuth)
 
 ### Prerequisites
 
-- Node.js 18+
-- PostgreSQL database (or [Neon](https://neon.tech) serverless)
-- Stripe account (test mode)
-- Google OAuth credentials (Google Cloud Console)
+- **Node.js 18+**
+- **PostgreSQL** database — [Neon](https://neon.tech) (free tier) recommended
+- **Stripe** account — [Test mode](https://dashboard.stripe.com/test/dashboard) is fine for development
+- **Google OAuth** credentials — [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
 
 ### Installation
 
@@ -161,15 +199,15 @@ npm install
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env with your values (see Environment Variables section)
+# Fill in your values — see Environment Variables section below
 
-# Push schema to database
+# Push the schema to your database
 npx prisma db push
 
-# (Optional) Seed the database
+# (Optional) Seed sample data
 npx tsx prisma/seed.ts
 
-# Start development server
+# Start the dev server
 npm run dev
 ```
 
@@ -179,17 +217,17 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Environment Variables
 
-Create a `.env` file in the project root with the following variables:
+Copy `.env.example` to `.env` and fill in these values:
 
 ```env
-# Database (PostgreSQL connection string)
+# Database
 DATABASE_URL=postgresql://user:password@host/database?sslmode=require
 
 # NextAuth
-NEXTAUTH_URL=http://localhost:3000          # Use production URL on Vercel
-NEXTAUTH_SECRET=your-secret-key             # Generate with: openssl rand -base64 32
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key             # openssl rand -base64 32
 
-# Google OAuth (from Google Cloud Console)
+# Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 
@@ -197,90 +235,85 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_MONTHLY_PRICE_ID=price_...           # Create in Stripe Dashboard
-STRIPE_YEARLY_PRICE_ID=price_...            # Create in Stripe Dashboard
+STRIPE_MONTHLY_PRICE_ID=price_...
+STRIPE_YEARLY_PRICE_ID=price_...
 
 # Email (SMTP)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
-SMTP_PASSWORD=your-app-password             # Gmail App Password
+SMTP_PASSWORD=your-app-password
 EMAIL_FROM=your-email@gmail.com
 ```
 
-### URL Configuration
+> **Tip:** For production, set `NEXTAUTH_URL` to your deployed URL. All OAuth callbacks, Stripe redirects, and email links derive from this value.
 
-The app automatically uses the correct URL based on environment:
+---
 
-- **Local development:** `NEXTAUTH_URL=http://localhost:3000`
-- **Production (Vercel):** `NEXTAUTH_URL=https://golf-platform-delta-three.vercel.app`
+## Internationalization (i18n)
 
-All redirects (Stripe checkout success/cancel, OAuth callbacks, email links) derive from `NEXTAUTH_URL`.
+GolfDraw supports multiple languages and currencies out of the box using [next-intl](https://next-intl-docs.vercel.app/).
+
+### Supported Locales
+
+| Locale | Language | Currency |
+| ------ | -------- | -------- |
+| `en`   | English  | GBP (£)  |
+| `es`   | Spanish  | EUR (€)  |
+| `fr`   | French   | EUR (€)  |
+
+### How It Works
+
+- Users select their language from the **language switcher** in the navbar
+- The preference is stored in a cookie and persists across sessions
+- All UI strings (navigation, pricing, dashboard, etc.) are translated
+- Currency formatting adapts automatically using `Intl.NumberFormat`
+
+### Adding a New Language
+
+1. Create a new translation file in `src/messages/` (e.g., `de.json`) using `en.json` as a template
+2. Add the locale to `src/i18n/config.ts`:
+   ```ts
+   export const locales = ["en", "es", "fr", "de"] as const;
+   ```
+3. Add the locale name and currency mapping in the same file
+4. The language will appear automatically in the switcher
 
 ---
 
 ## Deployment (Vercel)
 
-### Prerequisites
-
-- Vercel CLI installed globally: `npm i -g vercel`
-- GitHub repository connected
-
-### Deploy
-
 ```bash
-# Link and deploy
+npm i -g vercel    # Install Vercel CLI (if needed)
 vercel --prod --yes
 ```
 
-### Required Vercel Environment Variables
+### Required Environment Variables
 
-Set these in **Vercel Dashboard → Project Settings → Environment Variables**:
-
-| Variable                  | Value                                          |
-| ------------------------- | ---------------------------------------------- |
-| `DATABASE_URL`            | Your PostgreSQL connection string              |
-| `NEXTAUTH_URL`            | `https://golf-platform-delta-three.vercel.app` |
-| `NEXTAUTH_SECRET`         | Your secret key                                |
-| `GOOGLE_CLIENT_ID`        | Google OAuth client ID                         |
-| `GOOGLE_CLIENT_SECRET`    | Google OAuth client secret                     |
-| `STRIPE_SECRET_KEY`       | Stripe secret key                              |
-| `STRIPE_PUBLISHABLE_KEY`  | Stripe publishable key                         |
-| `STRIPE_WEBHOOK_SECRET`   | Stripe webhook signing secret                  |
-| `STRIPE_MONTHLY_PRICE_ID` | Stripe monthly price ID                        |
-| `STRIPE_YEARLY_PRICE_ID`  | Stripe yearly price ID                         |
-| `SMTP_HOST`               | `smtp.gmail.com`                               |
-| `SMTP_PORT`               | `587`                                          |
-| `SMTP_USER`               | SMTP email                                     |
-| `SMTP_PASSWORD`           | SMTP app password                              |
-| `EMAIL_FROM`              | Sender email address                           |
+Set all variables from the [Environment Variables](#environment-variables) section in **Vercel Dashboard → Project Settings → Environment Variables**.
 
 ### Prisma on Vercel
 
-Prisma client is auto-generated during the build process:
+Prisma client auto-generates during the build — no manual step needed:
 
-- `postinstall` script runs `prisma generate` after `npm install`
-- `build` script runs `prisma generate && next build`
+- `postinstall` → `prisma generate` (after `npm install`)
+- `build` → `prisma generate && next build`
 
-No manual `prisma generate` step needed — it's handled automatically.
+### Third-Party Configuration
 
-### Google OAuth Redirect URI
-
-Add this to your Google Cloud Console OAuth 2.0 credentials:
+**Google OAuth** — Add this redirect URI in [Google Cloud Console](https://console.cloud.google.com/apis/credentials):
 
 ```
-https://golf-platform-delta-three.vercel.app/api/auth/callback/google
+https://your-domain.vercel.app/api/auth/callback/google
 ```
 
-### Stripe Webhook Endpoint
-
-Create a webhook in Stripe Dashboard pointing to:
+**Stripe Webhook** — Create an endpoint in [Stripe Dashboard](https://dashboard.stripe.com/webhooks) pointing to:
 
 ```
-https://golf-platform-delta-three.vercel.app/api/webhooks/stripe
+https://your-domain.vercel.app/api/webhooks/stripe
 ```
 
-Events to listen for:
+Subscribe to these events:
 
 - `checkout.session.completed`
 - `customer.subscription.updated`
@@ -288,45 +321,32 @@ Events to listen for:
 
 ---
 
-## Test Credentials
+## Demo Credentials
 
 | Role  | Email              | Password    |
 | ----- | ------------------ | ----------- |
 | Admin | REDACTED | REDACTED |
 
-New users can register via the Sign Up page or Google OAuth.
+New accounts can be created via the Sign Up page or Google OAuth.
 
 ---
 
-## PRD Requirements Coverage
+## Available Scripts
 
-### ✅ Fully Implemented
-
-| Section                 | Feature                                                                                                                                                          |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Subscription**        | Monthly/Yearly plans, Stripe Checkout, billing portal, webhook lifecycle (renewal/cancellation/lapsed), access control, welcome email                            |
-| **Score Management**    | 5-score rolling logic, Stableford 1–45 range, one score per date, date-based entry, CRUD operations, reverse chronological display                               |
-| **Draw System**         | 5/4/3-number match types, random & algorithmic generation, simulation mode, admin execution & publishing, jackpot rollover, auto draw entry creation from scores |
-| **Prize Pool**          | 40%/35%/25% tier split, auto-calculation from subscribers, equal split among winners, jackpot carry-forward                                                      |
-| **Charity**             | Selection at signup, min 10% contribution, adjustable percentage, independent donations, searchable directory, featured charities, individual charity profiles   |
-| **Winner Verification** | Proof submission, admin approve/reject, payment states (Pending → Proof Submitted → Approved → Paid)                                                             |
-| **User Dashboard**      | Subscription status, score entry/edit/delete, charity selection & percentage, winnings overview with payment tracking                                            |
-| **Admin Dashboard**     | User management with search, draw configuration & simulation, charity CRUD, winner verification & payout, analytics overview, admin score editing                |
-| **UI/UX**               | Modern emotion-driven design, Framer Motion animations, responsive mobile-first layout, clear CTAs, dark/light theme                                             |
-| **Technical**           | JWT authentication, bcrypt hashing, middleware route + subscription protection, TypeScript, Zod validation, email notifications                                  |
-
-### ⚠️ Partial / Simplified
-
-| Feature               | Status                                               |
-| --------------------- | ---------------------------------------------------- |
-| Proof upload          | Accepts URL input instead of file upload             |
-| Multi-country support | Hardcoded GBP currency; no i18n or regional settings |
+```bash
+npm run dev          # Start dev server (Turbopack)
+npm run build        # Prisma generate + production build
+npm start            # Start production server
+npm run lint         # Run ESLint
+npx prisma studio    # Open database GUI
+npx prisma db push   # Push schema changes to database
+```
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Feel free to open issues or submit pull requests.
+Contributions are welcome! Whether it's a bug fix, new feature, translation, or documentation improvement — all PRs are appreciated.
 
 1. Fork the repository
 2. Create your feature branch: `git checkout -b feature/my-feature`
@@ -334,18 +354,13 @@ Contributions are welcome! Feel free to open issues or submit pull requests.
 4. Push to the branch: `git push origin feature/my-feature`
 5. Open a pull request
 
----
+### Ideas for Contributions
 
-## Scripts
-
-```bash
-npm run dev          # Start development server (Turbopack)
-npm run build        # Generate Prisma client + production build
-npm start            # Start production server
-npm run lint         # Run ESLint
-npx prisma studio    # Open Prisma Studio (database GUI)
-npx prisma db push   # Push schema changes to database
-```
+- Add new language translations (German, Italian, Portuguese, etc.)
+- Integrate cloud file storage (e.g., Vercel Blob, AWS S3) for proof uploads
+- Add player leaderboards and social features
+- Build a mobile app with React Native
+- Add real-time draw animations
 
 ---
 
